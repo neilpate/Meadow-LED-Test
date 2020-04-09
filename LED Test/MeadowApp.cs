@@ -40,7 +40,7 @@ namespace LED_Test
         {
             Initialize();
 
-            MainLoop(250);
+            MainLoop(100);
         }
 
         void Initialize()
