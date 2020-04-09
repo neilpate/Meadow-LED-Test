@@ -20,6 +20,8 @@ namespace LED_Test
 
         IDigitalInputPort DI00;
 
+        IAnalogInputPort analogIn;
+
         enum Mode
         {
             CountUp,
@@ -55,19 +57,28 @@ namespace LED_Test
 
             DI00 = Device.CreateDigitalInputPort(Device.Pins.D10);
 
-            mode = Mode.Walk;
+            mode = Mode.CountUp;
             walkDirection = WalkDirection.Up;
             Console.WriteLine($"Mode: {mode}");
 
+            analogIn = Device.CreateAnalogInputPort(Device.Pins.A02);
+            analogIn.StartSampling();
+
         }
-        void MainLoop(int duration)
+        void MainLoop(int maxLoopDurationMillis)
         {
             byte value = 1;
 
             bool previousSwitchState = false;
 
+            float analogValue;
+            float speedPercentage;
+
             while (true)
             {
+                analogValue = ReadAI();
+                speedPercentage =  analogValue / 3.3f * 100f;
+                Console.WriteLine($"Analogue value: {analogValue} V\tSpeed: {speedPercentage} %");
 
                 if (SwitchRisingEdge(previousSwitchState))
                 {
@@ -105,8 +116,16 @@ namespace LED_Test
                     default:
                         break;
                 }
-                Thread.Sleep(duration);
+
+                var sleepDuration = maxLoopDurationMillis * speedPercentage / 100f;
+                Thread.Sleep((int) sleepDuration);
             }
+        }
+
+        private float ReadAI()
+        {
+            analogIn.Read();
+            return analogIn.Voltage;
         }
 
         private bool SwitchRisingEdge(bool previousState)
