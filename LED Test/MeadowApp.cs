@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using Meadow;
 using Meadow.Devices;
 using Meadow.Foundation;
@@ -21,6 +23,11 @@ namespace LED_Test
         IDigitalInputPort DI00;
 
         IAnalogInputPort analogIn;
+
+        float analogValue = 3.3f;
+
+        ConcurrentQueue<string> consoleStatements = new ConcurrentQueue<string>();
+
 
         enum Mode
         {
@@ -71,14 +78,19 @@ namespace LED_Test
 
             bool previousSwitchState = false;
 
-            float analogValue;
+           // float analogValue;
             float speedPercentage;
+
+            Task.Run(ReadAI);
+          //  Task.Run(ConsoleOut);
 
             while (true)
             {
-                analogValue = ReadAI();
-                speedPercentage =  analogValue / 3.3f * 100f;
-                Console.WriteLine($"Analogue value: {analogValue} V\tSpeed: {speedPercentage} %");
+               // analogValue = ReadAI();
+                speedPercentage = analogValue / 3.3f * 100f;
+             //   consoleStatements.Enqueue($"Analogue value: {analogValue} V\tSpeed: {speedPercentage} %");
+                
+                // Console.WriteLine($"Analogue value: {analogValue} V\tSpeed: {speedPercentage} %");
 
                 if (SwitchRisingEdge(previousSwitchState))
                 {
@@ -118,14 +130,31 @@ namespace LED_Test
                 }
 
                 var sleepDuration = maxLoopDurationMillis * speedPercentage / 100f;
-                Thread.Sleep((int) sleepDuration);
+                Thread.Sleep((int)sleepDuration);
             }
         }
 
-        private float ReadAI()
+        private async Task ConsoleOut()
         {
-            analogIn.Read();
-            return analogIn.Voltage;
+            string consoleStatement;
+            while (true)
+            {
+         //       if (consoleStatements.TryDequeue(out consoleStatement))
+         //       {
+          //          Console.WriteLine(consoleStatement);
+          //      }
+            }
+        }
+
+        private async Task ReadAI()
+        {
+            while (true)
+            {
+                await analogIn.Read(1,1);
+                analogValue = analogIn.Voltage;
+            }
+
+            // return analogIn.Voltage;
         }
 
         private bool SwitchRisingEdge(bool previousState)
